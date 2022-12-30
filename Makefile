@@ -13,10 +13,12 @@ LIBFILES   = $(wildcard $(LIB_DIR)/*.c)
 OBJFILES = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o) $(LIBFILES:$(LIB_DIR)/%.c=$(OBJ_DIR)/%.o)
 OUT      = ./bin/mpi_nextdoor
 
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -g
+LDFLAGS = -framework Accelerate
+
 
 $(OUT): $(OBJFILES)
-	$(CC) -o $@ $^ 
+	$(CC) $(LDFLAGS) -o $@ $^ 
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
