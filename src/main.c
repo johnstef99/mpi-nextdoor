@@ -1,3 +1,4 @@
+#include <cilk/cilk.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +11,8 @@ void distance_matrix(double *X, double *Y, int m, int n, int d, double *C) {
   cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, m, n, d, alpha, X, d, Y,
               d, beta, C, m);
 
-  for (int i = 0; i < m; i++) {
-    for (int j = 0; j < n; j++) {
+  cilk_for(int i = 0; i < m; i++) {
+    cilk_for(int j = 0; j < n; j++) {
       for (int dim = 0; dim < d; dim++) {
         C[i * n + j] += X[i + dim] * X[i + dim] + Y[j + dim] * Y[j + dim];
       }

@@ -1,0 +1,5 @@
+CompileFlags:
+  Compiler: "/opt/opencilk/bin/clang"
+  Add:
+    - "--include-path=/opt/opencilk/lib/clang/14.0.6/include/cilk"
+    - "-Dcilk_for=for"
