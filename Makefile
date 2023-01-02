@@ -21,6 +21,7 @@ all: $(OUT)
 
 cilkscan: CFLAGS  += -Og -g -fsanitize=cilk
 cilkscan: LDFLAGS += -fsanitize=cilk
+cilkscan: K=3
 cilkscan: clean $(OUT) run
 
 $(OUT): $(OBJFILES)
@@ -32,9 +33,12 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-.PHONY: clean test run
+.PHONY: clean test run debug
 run:
-	./bin/mpi_nextdoor
+	./bin/mpi_nextdoor $(K)
+
+debug:
+	DEBUG=1 ./bin/mpi_nextdoor $(K)
 
 clean:
 	rm -f $(OBJFILES) $(OUT)
