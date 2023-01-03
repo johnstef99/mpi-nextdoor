@@ -31,8 +31,9 @@ knnresult kNN(double *X, double *Y, int m, int n, int d, int k) {
   }
 
   distance_matrix(X, Y, m, n, d, D);
+
   dd("D before sort\n");
-  print_matrix(D, m, n, double_matrix);
+  print_matrix(D, m, n, double_matrix, 1);
   dd("\n");
 
   cilk_for(int i = 0; i < m; i++) {
@@ -40,9 +41,9 @@ knnresult kNN(double *X, double *Y, int m, int n, int d, int k) {
   }
 
   dd("D after sort\n");
-  print_matrix(D, m, n, double_matrix);
+  print_matrix(D, m, n, double_matrix, 1);
   dd("\n");
-  print_matrix(D_ind, m, n, int_matrix);
+  print_matrix(D_ind, m, n, int_matrix, 1);
   dd("\n");
 
   knnresult res;

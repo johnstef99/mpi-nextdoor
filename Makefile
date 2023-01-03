@@ -7,12 +7,13 @@ SRC_DIR  = src
 OBJ_DIR  = obj
 LIB_DIR  = libs
 
-CC       = xcrun /opt/opencilk/bin/clang
 CFILES   = $(wildcard $(SRC_DIR)/*.c)
 LIBFILES = $(wildcard $(LIB_DIR)/*.c)
 OBJFILES = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o) $(LIBFILES:$(LIB_DIR)/%.c=$(OBJ_DIR)/%.o)
 OUT      = bin/mpi_nextdoor
 
+CC      = mpicc
+OMPI_CC = xcrun\ /opt/opencilk/bin/clang
 CFLAGS  = -Wall -fopencilk
 LDFLAGS = -framework Accelerate -fopencilk
 
@@ -25,10 +26,10 @@ cilkscan: K=3
 cilkscan: clean $(OUT) run
 
 $(OUT): $(OBJFILES)
-	$(CC) $(LDFLAGS) -o $@ $^ 
+	OMPI_CC=$(OMPI_CC) $(CC) $(LDFLAGS) -o $@ $^ 
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	OMPI_CC=$(OMPI_CC) $(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<

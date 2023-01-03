@@ -1,5 +1,7 @@
+# vim: set filetype=yaml :
 CompileFlags:
-  Compiler: "/opt/opencilk/bin/clang"
+  Compiler: "xcrun /opt/opencilk/bin/clang"
   Add:
+    - "-I/opt/opencilk/lib/clang/14.0.6/myinclude"
     - "-Dcilk_for=for"
-    - "--include-path=/opt/opencilk/lib/clang/14.0.6/include"
+    - "-I/opt/homebrew/Cellar/open-mpi/4.1.4_2/include"
