@@ -17,10 +17,27 @@ double file[20][2] = {
     {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {0, 0},
 };
 
+void merge_res(int row, int k, knnresult res_old, knnresult res_new,
+               double *merged, int *merged_idx) {
+  int i = 0, j = 0, w = 0;
+  int r = row * k;
+  while (w < k) {
+    if (i < k && (j >= k || res_old.ndist[r + i] < res_new.ndist[r + j])) {
+      merged[w] = res_old.ndist[r + i];
+      merged_idx[w] = res_old.nidx[r + i];
+      w++;
+      i++;
+    } else {
+      merged[w] = res_new.ndist[r + j];
+      merged_idx[w] = res_new.nidx[r + j];
+      w++;
+      j++;
+    }
+  }
+}
+
 void work(int rank, int n_proc, char *proc_name, int k) {
-
   // init process
-
   int proc_size = m / n_proc; // this process size
   int extra = m % n_proc;     // extra items that are going to the last process
 
@@ -41,16 +58,23 @@ void work(int rank, int n_proc, char *proc_name, int k) {
 
   memcpy(Y, X, (proc_size + extra) * d * sizeof(double));
 
+  // if you are the last process you take the extra items
   int x_size = rank != n_proc - 1 ? proc_size : proc_size + extra;
   int y_size, z_size;
-  int rank_next = (rank + 1) % n_proc;
-  int rank_prev = rank == 0 ? n_proc - 1 : rank - 1;
-  MPI_Request send_req, recv_req;
-  double *temp;
-  knnresult res_old = {.m = -1};
-  knnresult res_new = {.m = -1};
-  double *result = malloc(k * sizeof(double));
-  int *result_idx = malloc(k * sizeof(int));
+
+  int rank_next = (rank + 1) % n_proc;               // process after to me
+  int rank_prev = rank == 0 ? n_proc - 1 : rank - 1; // process before to me
+  MPI_Request send_req, recv_req;                    // flags needed for wait
+
+  double *temp;                  // temp pointer to swap Y and Z
+  knnresult res_old = {.m = -1}; // results from previous run
+  knnresult res_new = {.m = -1}; // results from this run
+
+  // arrays to merge and sort old and new results
+  double *merged = malloc(k * sizeof(double));
+  int *merged_idx = malloc(k * sizeof(int));
+
+  // start ring
   for (int r = 0; r < n_proc; r++) {
     y_size = (n_proc - 1 + r) % n_proc == rank ? proc_size + extra : proc_size;
     z_size = r == rank ? proc_size + extra : proc_size;
@@ -68,36 +92,20 @@ void work(int rank, int n_proc, char *proc_name, int k) {
     }
 
     if (res_old.m != -1) {
-      cilk_for(int row = 0; row < x_size; row++) {
-        int i = 0, j = 0, w = 0;
-        while (w < k) {
-          if (i < k && (j >= k || res_old.ndist[row * k + i] <
-                                      res_new.ndist[row * k + j])) {
-            result[w] = res_old.ndist[row * k + i];
-            result_idx[w] = res_old.nidx[row * k + i];
-            w++;
-            i++;
-          } else {
-            result[w] = res_new.ndist[row * k + j];
-            result_idx[w] = res_new.nidx[row * k + j];
-            w++;
-            j++;
-          }
-        }
+      for (int row = 0; row < x_size; row++) {
+        merge_res(row, k, res_old, res_new, merged, merged_idx);
         for (int l = 0; l < k; l++) {
-          res_new.ndist[row * k + l] = result[l];
-          res_new.nidx[row * k + l] = result_idx[l];
+          res_new.ndist[row * k + l] = merged[l];
+          res_new.nidx[row * k + l] = merged_idx[l];
         }
       }
     }
 
-    if (rank == r) {
-      printf("r=%d %d/%d@%s ===============================\n", r, rank, n_proc,
-             proc_name);
-      print_matrix(res_new.nidx, res_new.m, k, int_matrix, 0);
-      print_matrix(res_new.ndist, res_new.m, k, double_matrix, 0);
-      printf("\n");
-    }
+    dd("r=%d %d/%d@%s ===============================\n", r, rank, n_proc,
+           proc_name);
+    print_matrix(res_new.nidx, res_new.m, k, int_matrix, 1);
+    print_matrix(res_new.ndist, res_new.m, k, double_matrix, 1);
+    dd("\n");
 
     MPI_Wait(&send_req, MPI_STATUS_IGNORE);
     MPI_Wait(&recv_req, MPI_STATUS_IGNORE);
@@ -109,13 +117,12 @@ void work(int rank, int n_proc, char *proc_name, int k) {
     res_old = res_new;
   }
 
-  free(result);
-  free(result_idx);
+  free(merged);
+  free(merged_idx);
   free(X);
 }
 
 int main(int argc, char *argv[]) {
-  // Initialize the MPI environment
   MPI_Init(&argc, &argv);
 
   int k = atoi(argv[1]);
