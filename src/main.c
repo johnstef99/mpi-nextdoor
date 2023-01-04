@@ -5,17 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "csv.h"
 #include "knn.h"
 #include "matrix_utils.h"
 #include "quickselect.h"
-
-int m = 20;
-int d = 2;
-double file[20][2] = {
-    {1, 0},  {3, 0},  {3, 0},  {4, 0},  {5, 0},  {6, 0},  {7, 0},
-    {8, 0},  {9, 0},  {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0},
-    {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {0, 0},
-};
 
 void merge_res(int row, int k, knnresult res_old, knnresult res_new,
                double *merged, int *merged_idx) {
@@ -36,11 +29,15 @@ void merge_res(int row, int k, knnresult res_old, knnresult res_new,
   }
 }
 
-void work(int rank, int n_proc, char *proc_name, int k) {
+void work(int rank, int n_proc, char *proc_name, char *filename,
+          int max_line_size, int columns_to_skip, int m, int d, int k) {
   // init process
   int proc_size = m / n_proc; // this process size
   int extra = m % n_proc;     // extra items that are going to the last process
 
+  // if you are the last process you take the extra items
+  int x_size = rank != n_proc - 1 ? proc_size : proc_size + extra;
+  int y_size, z_size;
   double *X = malloc((proc_size + extra) * d * sizeof(double));
   double *Y = malloc((proc_size + extra) * d * sizeof(double));
   double *Z = malloc((proc_size + extra) * d * sizeof(double));
@@ -50,17 +47,13 @@ void work(int rank, int n_proc, char *proc_name, int k) {
     exit(1);
   }
 
-  cilk_for(int i = 0; i < proc_size + extra; i++) {
-    cilk_for(int dim = 0; dim < d; dim++) {
-      X[i * d + dim] = ((double *)file)[i * d + dim + rank * proc_size * d];
-    }
+  if (read_csv(filename, max_line_size, rank * proc_size, x_size, d, X,
+               columns_to_skip) != 0) {
+    fprintf(stderr, "Couldn't read file %s", filename);
+    exit(1);
   }
 
   memcpy(Y, X, (proc_size + extra) * d * sizeof(double));
-
-  // if you are the last process you take the extra items
-  int x_size = rank != n_proc - 1 ? proc_size : proc_size + extra;
-  int y_size, z_size;
 
   int rank_next = (rank + 1) % n_proc;               // process after to me
   int rank_prev = rank == 0 ? n_proc - 1 : rank - 1; // process before to me
@@ -92,7 +85,7 @@ void work(int rank, int n_proc, char *proc_name, int k) {
     }
 
     if (res_old.m != -1) {
-      for (int row = 0; row < x_size; row++) {
+      cilk_for(int row = 0; row < x_size; row++) {
         merge_res(row, k, res_old, res_new, merged, merged_idx);
         for (int l = 0; l < k; l++) {
           res_new.ndist[row * k + l] = merged[l];
@@ -101,8 +94,7 @@ void work(int rank, int n_proc, char *proc_name, int k) {
       }
     }
 
-    dd("r=%d %d/%d@%s ===============================\n", r, rank, n_proc,
-           proc_name);
+    dd("r=%d %d/%d@%s ========================\n", r, rank, n_proc, proc_name);
     print_matrix(res_new.nidx, res_new.m, k, int_matrix, 1);
     print_matrix(res_new.ndist, res_new.m, k, double_matrix, 1);
     dd("\n");
@@ -120,12 +112,27 @@ void work(int rank, int n_proc, char *proc_name, int k) {
   free(merged);
   free(merged_idx);
   free(X);
+  free(Y);
+  free(Z);
 }
 
 int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
 
-  int k = atoi(argv[1]);
+  if (argc != 7) {
+    fprintf(
+        stderr,
+        "Usage: %s [filename] [max_line_size] [columns_to_skip] [m] [d] [k]\n",
+        argv[0]);
+    return 1;
+  }
+
+  char *filename = argv[1];
+  int max_line_size = atoi(argv[2]);
+  int columns_to_skip = atoi(argv[3]);
+  int m = atoi(argv[4]);
+  int d = atoi(argv[5]);
+  int k = atoi(argv[6]);
 
   // number of processes
   int n_proc;
@@ -142,7 +149,8 @@ int main(int argc, char *argv[]) {
 
   printf("%d/%d@%s is alive\n", rank, n_proc, processor_name);
 
-  work(rank, n_proc, processor_name, k);
+  work(rank, n_proc, processor_name, filename, max_line_size, columns_to_skip,
+       m, d, k);
 
   MPI_Finalize();
 

@@ -22,8 +22,7 @@ void distance_matrix(double *X, double *Y, int m, int n, int d, double *D) {
 knnresult kNN(double *X, double *Y, int m, int n, int d, int k) {
   double *D = calloc(m * n, sizeof(double));
   int *D_ind = malloc(m * n * sizeof(int));
-  for (int i = 0; i < m * n; i++)
-    D_ind[i] = i;
+  cilk_for(int i = 0; i < m * n; i++) D_ind[i] = i;
 
   if (!D || !D_ind) {
     fprintf(stderr, "Memory allocation failed!\n");
