@@ -25,6 +25,7 @@ COL_TO_SKIP   = 0
 M             = 20
 D             = 2
 K             = 3
+OUTPUT_FILE   = test
 
 all: CFLAGS += -O3 -g
 all: $(OUT)
@@ -45,7 +46,7 @@ $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
 
 .PHONY: clean test run debug
 run:
-	mpirun -np $(NP) ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K)
+	mpirun -np $(NP) ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K) $(OUTPUT_FILE)
 
 debug: 
 	@DEBUG=1 make run

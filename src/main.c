@@ -6,9 +6,12 @@
 #include <string.h>
 
 #include "csv.h"
+#include "debug.h"
 #include "knn.h"
 #include "matrix_utils.h"
 #include "quickselect.h"
+
+#define MAX_FILENAME 100
 
 void merge_res(int row, int k, knnresult res_old, knnresult res_new,
                double *merged, int *merged_idx) {
@@ -30,7 +33,8 @@ void merge_res(int row, int k, knnresult res_old, knnresult res_new,
 }
 
 void work(int rank, int n_proc, char *proc_name, char *filename,
-          int max_line_size, int columns_to_skip, int m, int d, int k) {
+          int max_line_size, int columns_to_skip, int m, int d, int k,
+          char *output_file) {
   // init process
   int proc_size = m / n_proc; // this process size
   int extra = m % n_proc;     // extra items that are going to the last process
@@ -109,6 +113,39 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     res_old = res_new;
   }
 
+  if (rank == 0) {
+    char res_dist_filename[MAX_FILENAME];
+    char res_idx_filename[MAX_FILENAME];
+    sprintf(res_idx_filename, "results/%s_idx.csv", output_file);
+    sprintf(res_dist_filename, "results/%s_dist.csv", output_file);
+
+    printf("[%d]: Writting my results\n", rank);
+    write_to_csv(res_idx_filename, 0, res_old.nidx, res_old.m, res_old.k,
+                 sizeof(int));
+    write_to_csv(res_dist_filename, 0, res_old.ndist, res_old.m, res_old.k,
+                 sizeof(double));
+
+    for (int r = 1; r < n_proc; r++) {
+      int x_size = r != n_proc - 1 ? proc_size : proc_size + extra;
+      printf("[%d]: Waiting results from %d\n", rank, r);
+      MPI_Recv(res_old.nidx, x_size * k, MPI_INT, r, 0, MPI_COMM_WORLD, NULL);
+      MPI_Recv(res_old.ndist, x_size * k, MPI_DOUBLE, r, 0, MPI_COMM_WORLD,
+               NULL);
+      printf("[%d]: Writing results from %d\n", rank, r);
+      write_to_csv(res_idx_filename, 1, res_old.nidx, x_size, k, sizeof(int));
+      write_to_csv(res_dist_filename, 1, res_old.ndist, x_size, k,
+                   sizeof(double));
+    }
+
+  } else {
+    MPI_Send(res_old.nidx, res_old.m * res_old.k, MPI_INT, 0, 0,
+             MPI_COMM_WORLD);
+    MPI_Send(res_old.ndist, res_old.m * res_old.k, MPI_DOUBLE, 0, 0,
+             MPI_COMM_WORLD);
+  }
+
+  free(res_old.nidx);
+  free(res_old.ndist);
   free(merged);
   free(merged_idx);
   free(X);
@@ -119,11 +156,11 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
 int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
 
-  if (argc != 7) {
-    fprintf(
-        stderr,
-        "Usage: %s [filename] [max_line_size] [columns_to_skip] [m] [d] [k]\n",
-        argv[0]);
+  if (argc != 8) {
+    fprintf(stderr,
+            "Usage: %s [filename] [max_line_size] [columns_to_skip] [m] [d] "
+            "[k] [output_file]\n",
+            argv[0]);
     return 1;
   }
 
@@ -133,6 +170,7 @@ int main(int argc, char *argv[]) {
   int m = atoi(argv[4]);
   int d = atoi(argv[5]);
   int k = atoi(argv[6]);
+  char *output = argv[7];
 
   // number of processes
   int n_proc;
@@ -150,7 +188,7 @@ int main(int argc, char *argv[]) {
   printf("%d/%d@%s is alive\n", rank, n_proc, processor_name);
 
   work(rank, n_proc, processor_name, filename, max_line_size, columns_to_skip,
-       m, d, k);
+       m, d, k, output);
 
   MPI_Finalize();
 
