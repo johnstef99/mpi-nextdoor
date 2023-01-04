@@ -4,7 +4,7 @@
 #include <cilk/cilk.h>
 #include <Accelerate/Accelerate.h>
 
-#include "quickselect.h"
+#include "sort.h"
 #include "matrix_utils.h"
 #include "debug.h"
 

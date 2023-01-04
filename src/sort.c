@@ -1,5 +1,4 @@
-#include "quickselect.h"
-#include <limits.h>
+#include "sort.h"
 
 int partition(double *arr, int *ind, int low, int high) {
   int pivot = arr[high];

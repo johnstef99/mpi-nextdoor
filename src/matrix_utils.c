@@ -1,6 +1,4 @@
 #include "matrix_utils.h"
-#include "debug.h"
-#include <stdio.h>
 
 void print_matrix(void *A, int m, int n, enum MatrixType type, int debug) {
   for (int i = 0; i < m; i++) {

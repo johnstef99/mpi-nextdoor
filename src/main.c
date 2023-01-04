@@ -6,8 +6,6 @@
 #include "csv.h"
 #include "debug.h"
 #include "knn.h"
-#include "matrix_utils.h"
-#include "quickselect.h"
 
 #define MAX_FILENAME 100
 
