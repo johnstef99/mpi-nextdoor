@@ -1,5 +1,3 @@
-#include <float.h>
-#include <math.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,7 +87,7 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     }
 
     if (res_old.m != -1) {
-      cilk_for(int row = 0; row < x_size; row++) {
+      for (int row = 0; row < x_size; row++) {
         merge_res(row, k, res_old, res_new, merged, merged_idx);
         for (int l = 0; l < k; l++) {
           res_new.ndist[row * k + l] = merged[l];
