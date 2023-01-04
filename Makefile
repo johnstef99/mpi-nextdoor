@@ -17,6 +17,15 @@ OMPI_CC = xcrun\ /opt/opencilk/bin/clang
 CFLAGS  = -Wall -fopencilk
 LDFLAGS = -framework Accelerate -fopencilk
 
+# default values for testing
+NP            = 2
+FILE          = assets/test.csv
+MAX_LINE_SIZE = 100
+COL_TO_SKIP   = 0
+M             = 20
+D             = 2
+K             = 3
+
 all: CFLAGS += -O3 -g
 all: $(OUT)
 
@@ -36,10 +45,11 @@ $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
 
 .PHONY: clean test run debug
 run:
-	./bin/mpi_nextdoor $(K)
+	mpirun -np $(NP) ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K)
 
-debug:
-	DEBUG=1 ./bin/mpi_nextdoor $(K)
+debug: 
+	@DEBUG=1 make run
 
 clean:
 	rm -f $(OBJFILES) $(OUT)
+
