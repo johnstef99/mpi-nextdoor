@@ -42,7 +42,7 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
   // if you are the last process you take the extra items
   int x_size = rank != n_proc - 1 ? proc_size : proc_size + extra;
   int y_size, z_size;
-  double *X = malloc((proc_size + extra) * d * sizeof(double));
+  double *X = malloc(x_size * d * sizeof(double));
   double *Y = malloc((proc_size + extra) * d * sizeof(double));
   double *Z = malloc((proc_size + extra) * d * sizeof(double));
 
@@ -57,7 +57,7 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     exit(1);
   }
 
-  memcpy(Y, X, (proc_size + extra) * d * sizeof(double));
+  memcpy(Y, X, x_size * d * sizeof(double));
 
   int rank_next = (rank + 1) % n_proc;               // process after to me
   int rank_prev = rank == 0 ? n_proc - 1 : rank - 1; // process before to me
