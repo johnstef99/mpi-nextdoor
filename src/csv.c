@@ -1,5 +1,4 @@
 #include "csv.h"
-#include <stdio.h>
 
 int read_csv(char *filename, int max_line_size, int from, int n, int d,
              double *A, int columns_to_skip) {
@@ -18,7 +17,7 @@ int read_csv(char *filename, int max_line_size, int from, int n, int d,
 
     char *field = strtok(buffer, ",");
 
-    for (; columns_to_skip != 0; columns_to_skip--) {
+    for (int skip = 0; skip < columns_to_skip; skip++) {
       field = strtok(NULL, ","); // skip the char
     }
 
