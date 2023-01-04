@@ -35,3 +35,22 @@ int quickselect(double *arr, int *ind, int low, int high, int k) {
 
   return INT_MAX;
 }
+
+void quick_sort(double *arr, int *arr_ind, int left, int right) {
+  if (left < right) {
+    int pivot = arr[right];
+    int i = left - 1;
+    for (int j = left; j <= right - 1; j++) {
+      if (arr[j] < pivot) {
+        i++;
+        swap(double, &arr[i], &arr[j]);
+        swap(int, &arr_ind[i], &arr_ind[j]);
+      }
+    }
+    swap(double, &arr[i + 1], &arr[right]);
+    swap(int, &arr_ind[i + 1], &arr_ind[right]);
+    int partition_index = i + 1;
+    quick_sort(arr, arr_ind, left, partition_index - 1);
+    quick_sort(arr, arr_ind, partition_index + 1, right);
+  }
+}

@@ -1,7 +1,5 @@
 #include "knn.h"
 
-#define max(T, a, b) ((a) > (b) ? (a) : (b))
-
 void distance_matrix(double *X, double *Y, int m, int n, int d, double *D) {
   double alpha = -2;
   double beta = 0;
@@ -33,6 +31,7 @@ knnresult kNN(double *X, double *Y, int m, int n, int d, int k) {
 
   cilk_for(int i = 0; i < m; i++) {
     quickselect(D, D_ind, i * n, i * n + n - 1, k);
+    quick_sort(D, D_ind, i * n, i * n + k - 1);
   }
 
   knnresult res;
