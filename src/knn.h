@@ -3,6 +3,7 @@
 
 #include <cilk/cilk.h>
 #include <Accelerate/Accelerate.h>
+#include <float.h>
 
 #include "sort.h"
 #include "matrix_utils.h"

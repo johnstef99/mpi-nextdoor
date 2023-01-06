@@ -1,5 +1,7 @@
 #include "knn.h"
 
+#define min(a, b) ((a < b ? a : b))
+
 void distance_matrix(double *X, double *Y, int m, int n, int d, double *D) {
   double alpha = -2;
   double beta = 0;
@@ -30,8 +32,10 @@ knnresult kNN(double *X, double *Y, int m, int n, int d, int k) {
   distance_matrix(X, Y, m, n, d, D);
 
   cilk_for(int i = 0; i < m; i++) {
-    quickselect(D, D_ind, i * n, i * n + n - 1, k);
-    quick_sort(D, D_ind, i * n, i * n + k - 1);
+    if (n > k) {
+      quickselect(D, D_ind, i * n, i * n + n - 1, k);
+    }
+    quick_sort(D, D_ind, i * n, i * n + min(k, n) - 1);
   }
 
   knnresult res;
@@ -40,9 +44,13 @@ knnresult kNN(double *X, double *Y, int m, int n, int d, int k) {
   res.ndist = malloc(m * k * sizeof(double));
   res.nidx = malloc(m * k * sizeof(int));
   cilk_for(int i = 0; i < m; i++) {
-    cilk_for(int j = 0; j < k; j++) {
+    for (int j = 0; j < k; j++) {
       res.ndist[i * k + j] = D[i * n + j];
       res.nidx[i * k + j] = D_ind[i * n + j] - i * n;
+      if (j >= n) {
+        res.nidx[i * k + j] = -1;
+        res.ndist[i * k + j] = DBL_MAX;
+      }
     }
   }
 
