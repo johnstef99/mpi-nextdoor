@@ -109,6 +109,14 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     res_old = res_new;
   }
 
+  // free memory
+  free(merged);
+  free(merged_idx);
+  free(X);
+  free(Y);
+  free(Z);
+
+  // receive and write results
   if (rank == 0) {
     char res_dist_filename[MAX_FILENAME];
     char res_idx_filename[MAX_FILENAME];
@@ -121,30 +129,32 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     write_to_csv(res_dist_filename, 0, res_old.ndist, res_old.m, res_old.k,
                  sizeof(double));
 
+    double *dist = malloc((proc_size + extra) * k * sizeof(double));
+    int *idx = malloc((proc_size + extra) * k * sizeof(int));
+    if (!idx || !dist) {
+      fprintf(stderr, "Memory allocation failed!\n");
+      exit(1);
+    }
+
     for (int r = 1; r < n_proc; r++) {
       int x_size = r != n_proc - 1 ? proc_size : proc_size + extra;
       printf("[%d]: Waiting results from %d\n", rank, r);
-      MPI_Recv(Y, x_size * k, MPI_INT, r, 0, MPI_COMM_WORLD, NULL);
-      MPI_Recv(Z, x_size * k, MPI_DOUBLE, r, 0, MPI_COMM_WORLD, NULL);
+      MPI_Recv(idx, x_size * k, MPI_INT, r, 0, MPI_COMM_WORLD, NULL);
+      MPI_Recv(dist, x_size * k, MPI_DOUBLE, r, 0, MPI_COMM_WORLD, NULL);
       printf("[%d]: Writing results from %d\n", rank, r);
-      write_to_csv(res_idx_filename, 1, Y, x_size, k, sizeof(int));
-      write_to_csv(res_dist_filename, 1, Z, x_size, k, sizeof(double));
+      write_to_csv(res_idx_filename, 1, idx, x_size, k, sizeof(int));
+      write_to_csv(res_dist_filename, 1, dist, x_size, k, sizeof(double));
     }
 
+    free(idx);
+    free(dist);
   } else {
-    MPI_Send(res_old.nidx, res_old.m * res_old.k, MPI_INT, 0, 0,
-             MPI_COMM_WORLD);
-    MPI_Send(res_old.ndist, res_old.m * res_old.k, MPI_DOUBLE, 0, 0,
-             MPI_COMM_WORLD);
+    MPI_Send(res_old.nidx, x_size * k, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(res_old.ndist, x_size * k, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
   }
 
   free(res_old.nidx);
   free(res_old.ndist);
-  free(merged);
-  free(merged_idx);
-  free(X);
-  free(Y);
-  free(Z);
 }
 
 int main(int argc, char *argv[]) {
