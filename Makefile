@@ -13,9 +13,9 @@ OBJFILES = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o) $(LIBFILES:$(LIB_DIR)/%.c=$(O
 OUT      = bin/mpi_nextdoor
 
 CC      = mpicc
-OMPI_CC = xcrun\ /opt/opencilk/bin/clang
+OMPI_CC = /opt/opencilk/bin/clang
 CFLAGS  = -Wall -fopencilk
-LDFLAGS = -framework Accelerate -fopencilk
+LDFLAGS = -fopencilk -lblas
 
 # default values for testing
 NP            = 2

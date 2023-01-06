@@ -2,7 +2,7 @@
 #define KNN_H
 
 #include <cilk/cilk.h>
-#include <Accelerate/Accelerate.h>
+#include <cblas.h>
 #include <float.h>
 
 #include "sort.h"
