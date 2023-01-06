@@ -189,6 +189,13 @@ int main(int argc, char *argv[]) {
   char processor_name[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(processor_name, &name_len);
 
+  if (m < n_proc) {
+    fprintf(stderr,
+            "You assigend too many hosts for this amount of data (%d > %d)\n",
+            n_proc, m);
+    return 1;
+  }
+
   printf("%d/%d@%s is alive\n", rank, n_proc, processor_name);
 
   work(rank, n_proc, processor_name, filename, max_line_size, columns_to_skip,
