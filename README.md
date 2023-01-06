@@ -5,7 +5,7 @@
 _Dec 10, 2022_
 
 Implement in `MPI` a distributed brute-force all-KNN search algorithm for the
-$k$ nearest neighbors ($k$-NN) of each point $x \in X$.
+$k$ nearest neighbors (kNN) of each point $x \in X$.
 
 The set of $X$ points will be passed to you as an input array along with the
 number of points $n$, the number of dimensions $d$ and the number of neighbors
