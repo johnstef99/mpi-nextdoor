@@ -124,13 +124,11 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     for (int r = 1; r < n_proc; r++) {
       int x_size = r != n_proc - 1 ? proc_size : proc_size + extra;
       printf("[%d]: Waiting results from %d\n", rank, r);
-      MPI_Recv(res_old.nidx, x_size * k, MPI_INT, r, 0, MPI_COMM_WORLD, NULL);
-      MPI_Recv(res_old.ndist, x_size * k, MPI_DOUBLE, r, 0, MPI_COMM_WORLD,
-               NULL);
+      MPI_Recv(Y, x_size * k, MPI_INT, r, 0, MPI_COMM_WORLD, NULL);
+      MPI_Recv(Z, x_size * k, MPI_DOUBLE, r, 0, MPI_COMM_WORLD, NULL);
       printf("[%d]: Writing results from %d\n", rank, r);
-      write_to_csv(res_idx_filename, 1, res_old.nidx, x_size, k, sizeof(int));
-      write_to_csv(res_dist_filename, 1, res_old.ndist, x_size, k,
-                   sizeof(double));
+      write_to_csv(res_idx_filename, 1, Y, x_size, k, sizeof(int));
+      write_to_csv(res_dist_filename, 1, Z, x_size, k, sizeof(double));
     }
 
   } else {
