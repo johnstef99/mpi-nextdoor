@@ -43,7 +43,7 @@ all: $(OUT)
 
 cilkscan: CFLAGS  += -Og -g -fsanitize=cilk
 cilkscan: LDFLAGS += -fsanitize=cilk
-cilkscan: clean $(OUT) run
+cilkscan: clean $(OUT) test
 
 $(OUT): $(OBJFILES)
 	OMPI_CC=$(OMPI_CC) $(CC) $(LDFLAGS) -o $@ $^ 
@@ -54,15 +54,15 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-.PHONY: clean test run debug
+.PHONY: clean test debug
 
 ifeq ($(shell uname),Darwin)
-run:
+test:
 	mpirun -np $(NP) ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K) $(OUTPUT_FILE)
 else
 # each node in rome partition in HPC has 128 cpu cores
-run:
-	srun -p rome -J mpi_nextdoor -N 4 --ntasks-per-node=16 -c 8 ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K) $(OUTPUT_FILE)
+test:
+	srun -p rome -J mpi_nextdoor -N 4 --ntasks-per-node=1 -c 4 ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K) $(OUTPUT_FILE)
 endif
 
 debug: 
@@ -70,4 +70,3 @@ debug:
 
 clean:
 	rm -f $(OBJFILES) $(OUT)
-
