@@ -2,13 +2,17 @@
 #define KNN_H
 
 #include <cilk/cilk.h>
-#include <Accelerate/Accelerate.h>
 #include <float.h>
 
-#include "sort.h"
-#include "matrix_utils.h"
-#include "debug.h"
+#ifdef MACOS
+#include <Accelerate/Accelerate.h>
+#else
+#include <cblas.h>
+#endif // MACOS
 
+#include "debug.h"
+#include "matrix_utils.h"
+#include "sort.h"
 
 // Definition of the kNN result struct
 typedef struct knnresult {

@@ -13,10 +13,21 @@ OBJFILES = $(CFILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o) $(LIBFILES:$(LIB_DIR)/%.c=$(O
 OUT      = bin/mpi_nextdoor
 
 CC      = mpicc
-OMPI_CC = xcrun\ /opt/opencilk/bin/clang
 CFLAGS  = -Wall -fopencilk
-LDFLAGS = -framework Accelerate -fopencilk
+LDFLAGS = -fopencilk
 
+ifeq ($(shell uname),Darwin)
+	# config compile on macos
+	OMPI_CC  = xcrun\ /opt/opencilk/bin/clang
+	CFLAGS  += -DMACOS
+	LDFLAGS += -framework Accelerate
+else
+	# config compile on HPC AUTH
+	OMPI_CC  = $(OPENCILK)/build/bin/clang
+	CFLAGS  += -I$(OPENBLAS_ROOT)/include
+	LDFLAGS += -L$(OPENBLAS_ROOT)/lib -lopenblas
+endif
+  
 # default values for testing
 NP            = 2
 FILE          = assets/test.csv
@@ -27,12 +38,11 @@ D             = 2
 K             = 3
 OUTPUT_FILE   = test
 
-all: CFLAGS += -O3 -g
+all: CFLAGS += -O3
 all: $(OUT)
 
 cilkscan: CFLAGS  += -Og -g -fsanitize=cilk
 cilkscan: LDFLAGS += -fsanitize=cilk
-cilkscan: K=3
 cilkscan: clean $(OUT) run
 
 $(OUT): $(OBJFILES)
@@ -45,8 +55,15 @@ $(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean test run debug
+
+ifeq ($(shell uname),Darwin)
 run:
 	mpirun -np $(NP) ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K) $(OUTPUT_FILE)
+else
+# each node in rome partition in HPC has 128 cpu cores
+run:
+	srun -p rome -J mpi_nextdoor -N 4 --ntasks-per-node=16 -c 8 ./bin/mpi_nextdoor $(FILE) $(MAX_LINE_SIZE) $(COL_TO_SKIP) $(M) $(D) $(K) $(OUTPUT_FILE)
+endif
 
 debug: 
 	@DEBUG=1 make run

@@ -1,4 +1,6 @@
 # vim: set filetype=yaml :
+Diagnostics:
+  Suppress: [pp_file_not_found]
 CompileFlags:
   Compiler: "xcrun /opt/opencilk/bin/clang"
   Add:
