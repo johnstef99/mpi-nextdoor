@@ -71,5 +71,5 @@ debug:
 clean:
 	rm -f $(OBJFILES) $(OUT)
 
-grid:
+grid: ./grid_generator/grid.c
 	clang -O3 -Wall ./grid_generator/grid.c -o grid

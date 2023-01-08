@@ -15,9 +15,10 @@ void generate_grid(int d, const int *dim_sizes) {
   int i = 0;
   while (i >= 0) {
     // Print the current indices of the grid cell
-    for (int j = 0; j < d; j++) {
-      printf("%d ", indices[j]);
+    for (int j = 0; j < d - 1; j++) {
+      printf("%d,", indices[j]);
     }
+    printf("%d", indices[d - 1]);
     printf("\n");
 
     // Increment the indices
