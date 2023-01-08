@@ -2,12 +2,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "csv.h"
 #include "debug.h"
 #include "knn.h"
 
 #define MAX_FILENAME 100
+
+double get_elapsed_ms(struct timespec start, struct timespec end) {
+  return (double)(end.tv_sec - start.tv_sec) * 1000 +
+         (double)(end.tv_nsec - start.tv_nsec) / 1000000;
+}
 
 void merge_res(int row, int k, knnresult res_old, knnresult res_new,
                double *merged, int *merged_idx) {
@@ -66,7 +72,9 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
   // arrays to merge and sort old and new results
   double *merged = malloc(k * sizeof(double));
   int *merged_idx = malloc(k * sizeof(int));
-
+  MPI_Barrier(MPI_COMM_WORLD);
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
   // start ring
   for (int r = 0; r < n_proc; r++) {
     y_size = (n_proc - 1 + r) % n_proc == rank ? proc_size + extra : proc_size;
@@ -108,6 +116,8 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     free(res_old.ndist);
     res_old = res_new;
   }
+  MPI_Barrier(MPI_COMM_WORLD);
+  clock_gettime(CLOCK_MONOTONIC, &end);
 
   // free memory
   free(merged);
@@ -145,6 +155,8 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
       write_to_csv(res_idx_filename, 1, idx, x_size, k, sizeof(int));
       write_to_csv(res_dist_filename, 1, dist, x_size, k, sizeof(double));
     }
+
+    printf("Time: %f ms\n", get_elapsed_ms(start, end));
 
     free(idx);
     free(dist);
