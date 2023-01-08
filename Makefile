@@ -72,4 +72,4 @@ clean:
 	rm -f $(OBJFILES) $(OUT)
 
 grid: ./grid_generator/grid.c
-	clang -O3 -Wall ./grid_generator/grid.c -o grid
+	clang -O3 -Wall ./grid_generator/grid.c -o bin/grid
