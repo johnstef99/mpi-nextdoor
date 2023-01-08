@@ -133,7 +133,7 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
     sprintf(res_idx_filename, "results/%s_idx.csv", output_file);
     sprintf(res_dist_filename, "results/%s_dist.csv", output_file);
 
-    printf("[%d]: Writting my results\n", rank);
+    printf("[%d/%d@%s]: Writting my results\n", rank, n_proc - 1, proc_name);
     write_to_csv(res_idx_filename, 0, res_old.nidx, res_old.m, res_old.k,
                  sizeof(int));
     write_to_csv(res_dist_filename, 0, res_old.ndist, res_old.m, res_old.k,
@@ -148,10 +148,12 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
 
     for (int r = 1; r < n_proc; r++) {
       int x_size = r != n_proc - 1 ? proc_size : proc_size + extra;
-      printf("[%d]: Waiting results from %d\n", rank, r);
+      printf("[%d/%d@%s]: Waiting results from %d\n", rank, n_proc - 1,
+             proc_name, r);
       MPI_Recv(idx, x_size * k, MPI_INT, r, 0, MPI_COMM_WORLD, NULL);
       MPI_Recv(dist, x_size * k, MPI_DOUBLE, r, 0, MPI_COMM_WORLD, NULL);
-      printf("[%d]: Writing results from %d\n", rank, r);
+      printf("[%d/%d@%s]: Writting results from %d\n", rank, n_proc - 1,
+             proc_name, r);
       write_to_csv(res_idx_filename, 1, idx, x_size, k, sizeof(int));
       write_to_csv(res_dist_filename, 1, dist, x_size, k, sizeof(double));
     }
@@ -207,8 +209,6 @@ int main(int argc, char *argv[]) {
             n_proc, m);
     return 1;
   }
-
-  printf("%d/%d@%s is alive\n", rank, n_proc, processor_name);
 
   work(rank, n_proc, processor_name, filename, max_line_size, columns_to_skip,
        m, d, k, output);
