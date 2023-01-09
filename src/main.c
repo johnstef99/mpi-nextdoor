@@ -130,8 +130,17 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
   if (rank == 0) {
     char res_dist_filename[MAX_FILENAME];
     char res_idx_filename[MAX_FILENAME];
+    char res_time_filename[MAX_FILENAME];
     sprintf(res_idx_filename, "results/%s_idx.csv", output_file);
     sprintf(res_dist_filename, "results/%s_dist.csv", output_file);
+    sprintf(res_time_filename, "results/%s_time.txt", output_file);
+
+    FILE *fp = fopen(res_time_filename, "w");
+    if (fp == NULL) {
+      fprintf(stderr, "Error opening file to write the time result!\n");
+    }
+    fprintf(fp, "%f ms", get_elapsed_ms(start, end));
+    fclose(fp);
 
     printf("[%d/%d@%s]: Writting my results\n", rank, n_proc - 1, proc_name);
     write_to_csv(res_idx_filename, 0, res_old.nidx, res_old.m, res_old.k,
@@ -157,8 +166,6 @@ void work(int rank, int n_proc, char *proc_name, char *filename,
       write_to_csv(res_idx_filename, 1, idx, x_size, k, sizeof(int));
       write_to_csv(res_dist_filename, 1, dist, x_size, k, sizeof(double));
     }
-
-    printf("Time: %f ms\n", get_elapsed_ms(start, end));
 
     free(idx);
     free(dist);
