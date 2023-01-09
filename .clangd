@@ -1,9 +1,8 @@
 # vim: set filetype=yaml :
-Diagnostics:
-  Suppress: [pp_file_not_found]
 CompileFlags:
   Compiler: "xcrun /opt/opencilk/bin/clang"
   Add:
     - "-I/opt/opencilk/lib/clang/14.0.6/myinclude"
     - "-Dcilk_for=for"
+    - "-DMACOS"
     - "-I/opt/homebrew/Cellar/open-mpi/4.1.4_2/include"
