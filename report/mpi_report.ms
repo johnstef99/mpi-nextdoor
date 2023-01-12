@@ -148,9 +148,9 @@ The AUTH HPC\*[*] provided us maximum of 1024 cpus. Each node in the \fIrome\fR
 partition has 128 cpus so to fully take advantage of the Aristotel cluster we
 need to use 8 nodes. So we ran 4 tests for each dataset, in each test we
 assigned a different amount of cpus to every process. The fastest results of these
-tests are shown at the following table (Fig. \n[FigCount]), where $N$ is the
-number of nodes, $ppn$ is the number of process per node and $cpp$ is the
-number of cores per process ($ppn = 128/cpp$).
+tests are shown at the following table (Fig. \n[FigCount]), where $ppn$ is the
+number of process per node and $cpp$ is the number of cores per process ($ppn =
+128/cpp$).
 .FS
 HPC website: https://hpc.auth.gr/
 .FE
@@ -347,6 +347,6 @@ _
 .CD
 The source code for this assignment is available at:
 .br
-.I "https://github.com/johnstef99/mpi_nextdoor"
+.I "https://github.com/johnstef99/mpi-nextdoor"
 .DE
 .B2
